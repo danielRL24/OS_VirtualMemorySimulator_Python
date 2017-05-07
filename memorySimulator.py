@@ -118,15 +118,15 @@ def step(pygame, window, font):
     global HEAP_PTR
     global HEAP_MEM_PTR
     CODE_POINT.move_ip(0, 45)
+    print(STACK_PTR)
+    print(STACK_MEM_PTR)
     pygame.draw.rect(window, Color(231, 76, 60, 255), CODE_POINT, 0)
     if CODE[CODE_PTR].type is TypeMemory.STACK:
         STACK_ACTIONS[STACK_PTR][1].display_text(window, font, 545, 45 + STACK_MEM_PTR * 50)
         tmp_stack = STACK_ACTIONS[STACK_PTR]
         STACK_PTR += 1
-        print(STACK_MEM_PTR)
         while STACK_PTR < len(STACK_ACTIONS) and STACK_ACTIONS[STACK_PTR][0] == tmp_stack[0]:
             STACK_MEM_PTR += STACK_ACTIONS[STACK_PTR][2]
-            print(STACK_MEM_PTR)
             STACK_ACTIONS[STACK_PTR][1].display_text(window, font, 545, 45 + STACK_MEM_PTR * 50)
             STACK_PTR += 1
     elif CODE[CODE_PTR].type is TypeMemory.HEAP:
