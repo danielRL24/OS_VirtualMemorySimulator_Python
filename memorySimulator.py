@@ -67,7 +67,7 @@ def display_interface(pygame, window, font):
 
     for i in range(0, 10):
         type = TypeMemory.STACK
-        if i < 5:
+        if i < 4:
             type = TypeMemory.STACK
         elif i < 9:
             type = TypeMemory.HEAP
@@ -123,8 +123,10 @@ def step(pygame, window, font):
         STACK_ACTIONS[STACK_PTR][1].display_text(window, font, 545, 45 + STACK_MEM_PTR * 50)
         tmp_stack = STACK_ACTIONS[STACK_PTR]
         STACK_PTR += 1
+        print(STACK_MEM_PTR)
         while STACK_PTR < len(STACK_ACTIONS) and STACK_ACTIONS[STACK_PTR][0] == tmp_stack[0]:
             STACK_MEM_PTR += STACK_ACTIONS[STACK_PTR][2]
+            print(STACK_MEM_PTR)
             STACK_ACTIONS[STACK_PTR][1].display_text(window, font, 545, 45 + STACK_MEM_PTR * 50)
             STACK_PTR += 1
     elif CODE[CODE_PTR].type is TypeMemory.HEAP:
