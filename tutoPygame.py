@@ -6,7 +6,7 @@ from pygame.locals import *
 
 
 # ------------------------------------------------------------
-# MemoryCase class
+# Enum des type de case memoire
 # ------------------------------------------------------------
 class TypeMemory(Enum):
     STACK = 0
@@ -43,14 +43,15 @@ class TextCode:
     def display_text(self, window, font, x, y):
         window.blit(font.render(self.text, 1, self.color), (x, y))
 
+    def remove_text(self):
+        pass
+
 
 # ------------------------------------------------------------
 # Affichage initial
 # ------------------------------------------------------------
 def display_interface(pygame, window, font):
-    colors = [Color(241, 196, 15, 255),
-              Color(230, 126, 34, 255),
-              Color(52, 152, 219, 255)]
+    global COLORS
 
     # Preparation
     memory = []
@@ -63,7 +64,7 @@ def display_interface(pygame, window, font):
             type = TypeMemory.HEAP
         else:
             type = TypeMemory.HEAP_ALLOCATE
-        memory.append(MemoryCase(pygame.Rect(500, 30 + i * 50, 200, 50), colors[type.value], type))
+        memory.append(MemoryCase(pygame.Rect(500, 30 + i * 50, 200, 50), COLORS[type.value], type))
 
     # Affichage initial
     window.fill((44, 62, 80, 255))
@@ -80,8 +81,8 @@ def display_interface(pygame, window, font):
 
     # Quelques textes
     TextCode("Permanent Storage Area", TypeMemory.HEAP_ALLOCATE).display_text(window, font, 501, 495)
-    TextCode("* Stack Area", TypeMemory.STACK, colors[TypeMemory.STACK.value]).display_text(window, font, 500, 535)
-    TextCode("* Heap Area", TypeMemory.STACK, colors[TypeMemory.HEAP.value]).display_text(window, font, 500, 555)
+    TextCode("* Stack Area", TypeMemory.STACK, COLORS[TypeMemory.STACK.value]).display_text(window, font, 500, 535)
+    TextCode("* Heap Area", TypeMemory.STACK, COLORS[TypeMemory.HEAP.value]).display_text(window, font, 500, 555)
     TextCode("CODE", None, Color(236, 240, 241, 255)).display_text(window, font, 50, 10)
     TextCode("MEMORY", None, Color(236, 240, 241, 255)).display_text(window, font, 500, 10)
     TextCode("Press ESPACE to execute one line", None, Color(236, 240, 241, 255)).display_text(window, font, 50, 535)
@@ -97,13 +98,31 @@ def display_interface(pygame, window, font):
 # ------------------------------------------------------------
 # Action de la Touche Espace
 # ------------------------------------------------------------
-def step(pygame, window):
+def step(pygame, window, font):
     global CODE_POINT
     global CODE_PTR
     global STACK_PTR
-    global HEAP_STR
+    global STACK_MEM_PTR
+    global HEAP_PTR
+    global HEAP_MEM_PTR
     CODE_POINT.move_ip(0, 45)
     pygame.draw.rect(window, Color(231, 76, 60, 255), CODE_POINT, 0)
+    if CODE[CODE_PTR].type is TypeMemory.STACK:
+        STACK_ACTIONS[STACK_PTR][1].display_text(window, font, 545, 45 + STACK_MEM_PTR * 50)
+        tmp_stack = STACK_ACTIONS[STACK_PTR]
+        STACK_PTR += 1
+        while STACK_PTR < len(STACK_ACTIONS) and STACK_ACTIONS[STACK_PTR][0] == tmp_stack[0]:
+            STACK_MEM_PTR += STACK_ACTIONS[STACK_PTR][2]
+            STACK_ACTIONS[STACK_PTR][1].display_text(window, font, 545, 45 + STACK_MEM_PTR * 50)
+            STACK_PTR += 1
+    elif CODE[CODE_PTR].type is TypeMemory.HEAP:
+        HEAP_ACTIONS[HEAP_PTR][1].display_text(window, font, 545, 445 - HEAP_MEM_PTR * 50)
+        tmp_heap = HEAP_ACTIONS[HEAP_PTR]
+        HEAP_PTR += 1
+        while HEAP_PTR < len(HEAP_ACTIONS) and HEAP_ACTIONS[HEAP_PTR][0] == tmp_heap[0]:
+            HEAP_MEM_PTR += HEAP_ACTIONS[HEAP_PTR][2]
+            HEAP_ACTIONS[HEAP_PTR][1].display_text(window, font, 545, 445 - HEAP_MEM_PTR * 50)
+            HEAP_PTR += 1
     CODE_PTR += 1
 
 # ------------------------------------------------------------
@@ -123,7 +142,7 @@ def main():
     CODE_POINT = pygame.Rect(60, 85, 15, 15)
     window.fill(Color(231, 76, 60, 255), CODE_POINT)
 
-    CODE_PTR = 1
+    CODE_PTR = 0
 
     # Boucle d'animation
     animation = True
@@ -132,7 +151,7 @@ def main():
         for event in pygame.event.get():
             if event.type == KEYDOWN:
                 if event.key == K_SPACE and CODE_PTR < len(CODE):
-                    step(pygame, window)
+                    step(pygame, window, font)
             if event.type == QUIT:
                 animation = False
 
@@ -141,18 +160,48 @@ def main():
 # ------------------------------------------------------------
 # Variables globales
 # ------------------------------------------------------------
+# Couleurs
+COLORS = [Color(241, 196, 15, 255),
+          Color(230, 126, 34, 255),
+          Color(52, 152, 219, 255)]
+
 # Code à afficher
-CODE = [TextCode('int i = 10;', TypeMemory.STACK),
+CODE = [TextCode('char c = \'a\';', TypeMemory.STACK),
         TextCode('User user = new User();', TypeMemory.HEAP),
-        TextCode('i = 25 + 6;', TypeMemory.STACK),
+        TextCode('c = \'b\';', TypeMemory.STACK),
         TextCode('delete user;', TypeMemory.HEAP),
-        TextCode('char[] c = malloc(2*sizeof(char));', TypeMemory.HEAP),
-        TextCode('strcpy(c, "LE");', TypeMemory.HEAP),
-        TextCode('free(c);', TypeMemory.HEAP)]
+        TextCode('char[] cs = malloc(2*sizeof(char));', TypeMemory.HEAP),
+        TextCode('strcpy(cs, "LE");', TypeMemory.HEAP),
+        TextCode('// free(cs);', None)]
+
+# 1e element : Group number
+# 2e element : Text
+# 3e element :
+# 1  => Ajout        (incremente pointeur)
+# 0  => Modification (ne change pas pointeur)
+# -1 => Suppression  (decremente pointeur)
+
+STACK_ACTIONS = [(1, TextCode('c = a', None), 1),
+                 (2, TextCode('c = a', None, COLORS[TypeMemory.STACK.value]), -1),
+                 (2, TextCode('c = b', None), 1)]
+HEAP_ACTIONS = [(1, TextCode('user', None), 1),
+                (1, TextCode('user', None), 1),
+                (1, TextCode('user', None), 1),
+                (2, TextCode('user', None, COLORS[TypeMemory.HEAP.value]), -1),
+                (2, TextCode('user', None, COLORS[TypeMemory.HEAP.value]), -1),
+                (2, TextCode('user', None, COLORS[TypeMemory.HEAP.value]), -1),
+                (3, TextCode('c = ', None), 1),
+                (3, TextCode('c = ', None), 1),
+                (4, TextCode('c = ', None, COLORS[TypeMemory.HEAP.value]), -1),
+                (4, TextCode('c = ', None, COLORS[TypeMemory.HEAP.value]), -1),
+                (4, TextCode('c = L', None), 1),
+                (4, TextCode('c = E', None), 1)]
 
 # Pointeurs
 STACK_PTR = 0
-HEAP_STR = 0
+STACK_MEM_PTR = 0
+HEAP_PTR = 0
+HEAP_MEM_PTR = 0
 CODE_PTR = 0
 
 # Point d'arret
