@@ -1,5 +1,13 @@
+"""
+Memory Simulator
+04 - TP Final
+3253.1 - Conception OS
+RODRIGUES L. Daniel & RUEDIN Cyril
+mai 2017
+"""
 import pygame
 import sys
+import os
 
 from enum import Enum
 from pygame.locals import *
@@ -51,6 +59,7 @@ class TextCode:
 # Affichage initial
 # ------------------------------------------------------------
 def display_interface(pygame, window, font):
+    """Initialise l'affichage de la fenêtre"""
     global COLORS
 
     # Preparation
@@ -86,6 +95,8 @@ def display_interface(pygame, window, font):
     TextCode("CODE", None, Color(236, 240, 241, 255)).display_text(window, font, 50, 10)
     TextCode("MEMORY", None, Color(236, 240, 241, 255)).display_text(window, font, 500, 10)
     TextCode("Press ESPACE to execute one line", None, Color(236, 240, 241, 255)).display_text(window, font, 50, 535)
+    TextCode("Press r to restart the application", None, Color(236, 240, 241, 255)).display_text(window, font, 50, 555)
+    TextCode("Press ESC to quit the application", None, Color(236, 240, 241, 255)).display_text(window, font, 50, 575)
 
     i = 0
     for c in CODE:
@@ -99,6 +110,7 @@ def display_interface(pygame, window, font):
 # Action de la Touche Espace
 # ------------------------------------------------------------
 def step(pygame, window, font):
+    """Fonction appelee a chaque fois que l'utilisateur appuie sur ESPACE"""
     global CODE_POINT
     global CODE_PTR
     global STACK_PTR
@@ -125,10 +137,15 @@ def step(pygame, window, font):
             HEAP_PTR += 1
     CODE_PTR += 1
 
+
 # ------------------------------------------------------------
 # MAIN
 # ------------------------------------------------------------
 def main():
+    """Fonction principale
+        - Initialisation de la fenêtre
+        - Boucle d'animation
+    """
     global CODE_POINT
     global CODE_PTR
     pygame.init()
@@ -152,6 +169,10 @@ def main():
             if event.type == KEYDOWN:
                 if event.key == K_SPACE and CODE_PTR < len(CODE):
                     step(pygame, window, font)
+                if event.key == K_r:
+                    restart_program()
+                if event.key == K_ESCAPE:
+                    animation = False
             if event.type == QUIT:
                 animation = False
 
@@ -167,6 +188,7 @@ COLORS = [Color(241, 196, 15, 255),
 
 # Code à afficher
 CODE = [TextCode('char c = \'a\';', TypeMemory.STACK),
+        TextCode('// User object is 3 bytes', None),
         TextCode('User user = new User();', TypeMemory.HEAP),
         TextCode('c = \'b\';', TypeMemory.STACK),
         TextCode('delete user;', TypeMemory.HEAP),
@@ -174,12 +196,13 @@ CODE = [TextCode('char c = \'a\';', TypeMemory.STACK),
         TextCode('strcpy(cs, "LE");', TypeMemory.HEAP),
         TextCode('// free(cs);', None)]
 
-# 1e element : Group number
-# 2e element : Text
+# 1e element :
+#   Numero groupe (permet de regrouper les commandes a "executer" en meme temps)
+# 2e element :
+#   Texte a afficher dans les cases memoire
 # 3e element :
-# 1  => Ajout        (incremente pointeur)
-# 0  => Modification (ne change pas pointeur)
-# -1 => Suppression  (decremente pointeur)
+#   1  => Ajout
+#   -1 => Suppression
 
 STACK_ACTIONS = [(1, TextCode('c = a', None), 1),
                  (2, TextCode('c = a', None, COLORS[TypeMemory.STACK.value]), -1),
@@ -204,8 +227,14 @@ HEAP_PTR = 0
 HEAP_MEM_PTR = 0
 CODE_PTR = 0
 
-# Point d'arret
+# Point d'arret dans le code
 CODE_POINT = None
+
+
+def restart_program():
+    """Redemarrer le programme courant"""
+    python = sys.executable
+    os.execl(python, python, * sys.argv)
 
 # ------------------------------------------------------------
 # POINT D'ENTREE
